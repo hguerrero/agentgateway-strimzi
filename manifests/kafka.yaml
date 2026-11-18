@@ -1,0 +1,41 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: dual-role
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  replicas: 1
+  roles: [controller, broker]
+  storage:
+    type: ephemeral
+---
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: my-cluster
+  namespace: kafka
+spec:
+  kafka:
+    listeners:
+      - name: external
+        port: 9094
+        type: tlsroute
+        tls: true
+        configuration:
+          # Strimzi creates one TLSRoute per hostname and attaches it to the Gateway.
+          bootstrap:
+            host: bootstrap.kafka.localtest.me
+          hostTemplate: broker-{nodeId}.kafka.localtest.me
+          advertisedPortTemplate: "9094" # the port clients reach on the host
+          parentRefs:
+            - group: gateway.networking.k8s.io
+              kind: Gateway
+              name: kafka-gateway
+    config:
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1

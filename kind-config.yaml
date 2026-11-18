@@ -1,0 +1,10 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      # host:9094 -> kind node:30094 (the NodePort of the gateway Service)
+      - containerPort: 30094
+        hostPort: 9094
+        listenAddress: "127.0.0.1"
+        protocol: TCP

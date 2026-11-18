@@ -1,0 +1,39 @@
+# Pins the Service that agentgateway generates for the Gateway to a NodePort,
+# so the kind port mapping (host 9094 -> node 30094) reaches it.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayParameters
+metadata:
+  name: nodeport
+  namespace: kafka
+spec:
+  service:
+    spec:
+      type: NodePort
+      ports:
+        - port: 9094
+          nodePort: 30094
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: kafka-gateway
+  namespace: kafka
+spec:
+  gatewayClassName: agentgateway
+  infrastructure:
+    parametersRef:
+      group: agentgateway.dev
+      kind: AgentgatewayParameters
+      name: nodeport
+  listeners:
+    - name: kafka-tls
+      protocol: TLS
+      port: 9094
+      hostname: "*.kafka.localtest.me"
+      tls:
+        mode: Passthrough # Kafka's own TLS is untouched; the gateway only routes on SNI
+      allowedRoutes:
+        namespaces:
+          from: Same
+        kinds:
+          - kind: TLSRoute
