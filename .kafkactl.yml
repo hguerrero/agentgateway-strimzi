@@ -1,0 +1,22 @@
+# kafkactl configuration for the agentgateway TLSRoute example.
+#
+# Usage (from the repo root, after extracting the CA with ./scripts/test.sh or the README command):
+#   kafkactl get brokers
+#   kafkactl --context agentgateway get topics
+
+contexts:
+  # Kafka through agentgateway: SNI routing on localhost:9094, TLS passthrough to Kafka.
+  agentgateway:
+    brokers:
+      - bootstrap.kafka.localtest.me:9094
+    tls:
+      enabled: true
+      ca: ./ca.crt # Strimzi cluster CA, extracted from the my-cluster-cluster-ca-cert secret
+    clientID: kafkactl-agentgateway
+    requestTimeout: 10s
+
+current-context: agentgateway
+
+# Single-broker demo cluster
+defaultPartitions: 1
+defaultReplicationFactor: 1

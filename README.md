@@ -3,7 +3,7 @@
 A minimal example: [agentgateway](https://agentgateway.dev) is the ingress for a [Strimzi](https://strimzi.io) Kafka cluster on Kubernetes. Kafka clients on your machine connect to `localhost:9094`. No `kubectl port-forward`.
 
 ```
-host (kcat, Kafka CLI, your app)
+host (kafkactl, any Kafka client)
    │  TLS, SNI = bootstrap.kafka.localtest.me / broker-0.kafka.localtest.me
    ▼
 127.0.0.1:9094 ──kind extraPortMappings──▶ node:30094 (NodePort)
@@ -23,7 +23,7 @@ Kafka bootstrap Service / broker-0 Service
 
 ## Prerequisites
 
-`docker`, `kind`, `kubectl`, `helm`.
+`docker`, `kind`, `kubectl`, `helm` and `kafkactl` (or only Docker for Option B).
 
 ## Run
 
@@ -52,19 +52,29 @@ kubectl -n kafka get tlsroute
 
 ## Test from the host
 
+**Option A: kafkactl (recommended)**
+
 ```sh
+brew install deviceinsight/packages/kafkactl   # or: go install github.com/deviceinsight/kafkactl@latest
 ./scripts/test.sh
 ```
 
-The script creates a topic, produces one message and consumes it, all through `bootstrap.kafka.localtest.me:9094`. The Kafka CLI runs in a container only to avoid installing it. The container is pointed at the host's published port with `--add-host`.
-
-To use your own client, get the cluster CA and connect with `security.protocol=SSL`:
+The script extracts the Strimzi cluster CA to `ca.crt`, then uses the `agentgateway` context in [`.kafkactl.yml`](.kafkactl.yml) to list brokers, create a topic, produce a message and consume it, all through `bootstrap.kafka.localtest.me:9094`. `get brokers` shows the advertised address, `broker-0.kafka.localtest.me:9094`, which goes through the gateway too. Run `kafkactl` from the repo root to use the same config:
 
 ```sh
-kubectl -n kafka get secret my-cluster-cluster-ca-cert -o jsonpath='{.data.ca\.crt}' | base64 -d > ca.crt
-# bootstrap.servers=bootstrap.kafka.localtest.me:9094
-# ssl.truststore.type=PEM  ssl.truststore.location=ca.crt
+kafkactl get brokers
+kafkactl get topics
 ```
+
+**Option B: Kafka CLI in a container**
+
+```sh
+./scripts/test-docker.sh
+```
+
+For hosts without kafkactl. The container reaches the host's published port with `--add-host`.
+
+Any other client works too. Use the cluster CA (`kubectl -n kafka get secret my-cluster-cluster-ca-cert -o jsonpath='{.data.ca\.crt}' | base64 -d`), `security.protocol=SSL` and `bootstrap.servers=bootstrap.kafka.localtest.me:9094`.
 
 A quick check of the SNI routing, without Kafka:
 
