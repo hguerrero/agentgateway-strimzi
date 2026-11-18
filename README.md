@@ -39,7 +39,7 @@ helm upgrade -i --create-namespace -n agentgateway-system --version v1.7.0 \
 helm upgrade -i -n agentgateway-system --version v1.7.0 --wait \
   agentgateway oci://cr.agentgateway.dev/charts/agentgateway
 
-# Strimzi (install the CRDs before the operator needs TLSRoute: Gateway API goes first, as above)
+# Strimzi (after the Gateway API CRDs, so the operator finds TLSRoute at startup)
 kubectl create ns kafka
 helm upgrade -i -n kafka --version 1.3.1 --wait \
   strimzi oci://quay.io/strimzi-helm/strimzi-kafka-operator
@@ -75,7 +75,7 @@ echo | openssl s_client -connect 127.0.0.1:9094 -servername other.kafka.localtes
 
 ## Scaling out
 
-Raise `replicas` in the `KafkaNodePool`. Strimzi adds a `broker-N.kafka.localtest.me` TLSRoute for each new broker, and the client's `--add-host` list (only needed for the container in `test.sh`) is the only thing to extend.
+Raise `replicas` in the `KafkaNodePool`. Strimzi adds a `broker-N.kafka.localtest.me` TLSRoute for each new broker. Nothing else changes, except the `--add-host` list in `scripts/test.sh`, which exists only for the test container.
 
 ## Clean up
 
