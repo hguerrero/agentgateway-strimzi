@@ -23,7 +23,7 @@ Kafka bootstrap Service / broker-0 Service
 
 ## Prerequisites
 
-`docker`, `kind`, `kubectl`, `helm` and `kafkactl` (or only Docker for Option B).
+`docker`, `kind`, `kubectl`, `helm`, and `kafkactl` for the main test (Option B needs only Docker instead).
 
 ## Run
 
