@@ -2,16 +2,27 @@
 
 A minimal example: [agentgateway](https://agentgateway.dev) is the ingress for a [Strimzi](https://strimzi.io) Kafka cluster on Kubernetes. Kafka clients on your machine connect to `localhost:9094`. No `kubectl port-forward`.
 
+```mermaid
+flowchart TD
+    client["Host<br/>kafkactl or any Kafka client"]
+    port["127.0.0.1:9094<br/>kind extraPortMappings"]
+    node["kind node :30094<br/>NodePort"]
+    gw["agentgateway Gateway kafka-gateway<br/>listener 9094, TLS Passthrough"]
+    r1["TLSRoute<br/>bootstrap.kafka.localtest.me"]
+    r2["TLSRoute<br/>broker-0.kafka.localtest.me"]
+    s1["Kafka bootstrap Service"]
+    s2["Kafka broker-0 Service"]
+
+    client -->|"TLS, SNI = hostname"| port
+    port --> node
+    node --> gw
+    gw -->|"SNI match"| r1
+    gw -->|"SNI match"| r2
+    r1 --> s1
+    r2 --> s2
 ```
-host (kafkactl, any Kafka client)
-   │  TLS, SNI = bootstrap.kafka.localtest.me / broker-0.kafka.localtest.me
-   ▼
-127.0.0.1:9094 ──kind extraPortMappings──▶ node:30094 (NodePort)
-   ▼
-agentgateway Gateway "kafka-gateway"   listener 9094, protocol TLS, mode Passthrough
-   ▼  TLSRoute per hostname (created by Strimzi)
-Kafka bootstrap Service / broker-0 Service
-```
+
+The TLSRoutes are created by Strimzi, one per hostname.
 
 ## How it works
 
